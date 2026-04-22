@@ -1,0 +1,3 @@
+callmain:
+        goto main linking r1
+        halt

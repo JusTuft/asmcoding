@@ -1,0 +1,112 @@
+.zero r0
+.temps r6, r7
+
+.section rodata
+jumptable:
+is_digit_table:
+
+
+.section init
+        .data num_case
+        .data enter_case
+        .data jump_default_case
+        .data digit_default_case
+
+        r5 := 255
+        goto init_tables
+
+init_tables_loop:
+        m[r0][jumptable + r5] := jump_default_case
+        m[r0][is_digit_table + r5] := digit_default_case
+        r5 = r5 - 1
+
+init_tables:
+        if (r5 != 0) goto init_tables_loop
+        
+        m[r0][jumptable + '0'] := num_case
+        m[r0][jumptable + '1'] := num_case
+        m[r0][jumptable + '2'] := num_case
+        m[r0][jumptable + '3'] := num_case
+        m[r0][jumptable + '4'] := num_case
+        m[r0][jumptable + '5'] := num_case
+        m[r0][jumptable + '6'] := num_case
+        m[r0][jumptable + '7'] := num_case
+        m[r0][jumptable + '8'] := num_case
+        m[r0][jumptable + '9'] := num_case
+        m[r0][jumptable + ' '] := waiting
+
+        m[r0][is_digit_table + '0'] := enter_case
+        m[r0][is_digit_table + '1'] := enter_case
+        m[r0][is_digit_table + '2'] := enter_case
+        m[r0][is_digit_table + '3'] := enter_case
+        m[r0][is_digit_table + '4'] := enter_case
+        m[r0][is_digit_table + '5'] := enter_case
+        m[r0][is_digit_table + '6'] := enter_case
+        m[r0][is_digit_table + '7'] := enter_case
+        m[r0][is_digit_table + '8'] := enter_case
+        m[r0][is_digit_table + '9'] := enter_case
+
+.section text
+
+main:
+        push r1 on stack r2
+        push r3 on stack r2
+        push r4 on stack r2
+
+        r3 := 255
+        goto init_tables
+
+        loop: 
+                goto waiting
+                push r1 on stack r2
+                goto loop
+        
+
+        pop r4 off stack r2
+        pop r3 off stack r2
+        pop r5 off stack r2
+        r1 := 0
+        goto r5
+
+
+
+
+waiting:
+        r1 push 
+        r1 := input()
+        
+waiting_with_character:
+        
+        // ... test to see if r1 signals end of file,
+        // and if so, go to end of procedure ...
+        if(r1 == EOF?) goto finish
+        
+        // branch indirect through jump table
+        r5 := jumptable + r1
+        r5 := m[r0][r5]
+        goto r5
+
+num_case:
+        push r1 on stack r2
+        goto entering
+
+entering:
+        r1 := input()
+        // if it is a digit
+        r5 = is_digit_table + r1
+        r5 := m[r0][r5]
+        goto r5
+
+enter_case
+        pop r4 off stack r2
+        r4 := r4 * 10
+        r4 := r4 + r1
+        push r4 on stack r2
+        goto entering
+
+finish:
+        pop r4 off stack r2
+        pop r3 off stack r2
+        pop r5 off stack r2
+        r1 := 0
+        goto r5
