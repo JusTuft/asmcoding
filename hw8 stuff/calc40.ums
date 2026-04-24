@@ -21,7 +21,7 @@ init_tables_loop:
         r5 = r5 - 1
 
 init_tables:
-        if (r5 != 0) goto init_tables_loop
+        if (r5 != -1) goto init_tables_loop
         
         m[r0][jumptable + '0'] := num_case
         m[r0][jumptable + '1'] := num_case
@@ -53,8 +53,8 @@ main:
         push r3 on stack r2
         push r4 on stack r2
 
-        r3 := 255
-        goto init_tables
+        r5 := 255
+        // goto init_tables
 
         loop: 
                 goto waiting
@@ -69,17 +69,13 @@ main:
         goto r5
 
 
-
-
 waiting:
-        r1 push 
         r1 := input()
         
 waiting_with_character:
         
-        // ... test to see if r1 signals end of file,
-        // and if so, go to end of procedure ...
-        if(r1 == EOF?) goto finish
+        
+        if(r1 == EOF) goto finish
         
         // branch indirect through jump table
         r5 := jumptable + r1
@@ -90,6 +86,13 @@ num_case:
         push r1 on stack r2
         goto entering
 
+jump_default_case:
+        if (r1 != ' ') // output error message
+        goto waiting
+
+digit_default_case:
+        
+
 entering:
         r1 := input()
         // if it is a digit
@@ -97,7 +100,7 @@ entering:
         r5 := m[r0][r5]
         goto r5
 
-enter_case
+enter_case:
         pop r4 off stack r2
         r4 := r4 * 10
         r4 := r4 + r1
