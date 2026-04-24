@@ -3,6 +3,5 @@
 .section init
 
 callmain:
-        output "callmain"
         goto main linking r1
         halt

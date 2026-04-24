@@ -3,28 +3,24 @@
 .section text
 
 printd:
-        output "Printd"
         push r3 on stack r2
         push r4 on stack r2
         push r1 on stack r2
         r4 := m[r0][r2+3]
         
-        output "Printing"
         if (r4 == 0) goto outputzero
-        if (r4 <s -1) goto outputdash using r5
-        // if (r4 == 0x80000000) goto big_negative
-
+        if (r4 <s 0) goto outputdash using r5
+        
+check:
         if (r4 >s -1) goto andif using r5   
-        output "After"
 
 printd_loop:
-        output "Print Loop"
 
         r3 := r4
         r4 := r4 / 10
         push r4 on stack r2
         goto printd linking r1
-        output "Recursion!"
+        //output "Recursion!"
         pop r4 off stack r2
         r4 := r4 * 10
         r3 := r3 - r4
@@ -40,19 +36,27 @@ printd_loop:
         
 
 outputzero:
+        
         output r0
         goto printd_loop
 
 outputdash:
         output '-'
-        goto printd_loop
+        if (r4 == -1) goto neg_one using r5
+        r4 := r4 nand r4
+        r4 := r4 + 1
+        goto check
+
+neg_one:
+        r4 := 1
+        goto finish_print
 
 andif: 
-        if (r4 <s 10) goto finish using r5
-        output "the andif"
+        if (r4 <s 10) goto finish_print using r5
         goto printd_loop
 
-finish:
+finish_print:
+        r4 := r4 + 48
         output r4
         pop r5 off stack r2
         pop r4 off stack r2
