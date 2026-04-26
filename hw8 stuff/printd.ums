@@ -7,12 +7,11 @@ printd:
         push r4 on stack r2
         push r1 on stack r2
         r4 := m[r0][r2+3]
-        
         if (r4 == 0) goto outputzero
         if (r4 <s 0) goto outputdash using r5
         
 check:
-        if (r4 >s -1) goto andif using r5   
+        if (r4 >s -1) goto andif using r5  
 
 printd_loop:
 

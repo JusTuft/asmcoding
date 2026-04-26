@@ -3,23 +3,22 @@
 
 .section rodata
         jumptable: .space 256
-  //      is_digit_table: .space 256
+        is_digit_table: .space 256
 
 .section init
         r5 := 255
         goto init_tables
 
 init_tables_loop:
-        r6 := jumptable + r5
-        m[r0][r6] := input_error
-        // r6 := is_digit_table + r5
-        // m[r0][r6] := digit_default_case
+        r3 := jumptable + r5
+        m[r0][r3] := input_error
+        r3 := is_digit_table + r5
+        m[r0][r3] := input_error
         r5 := r5 - 1
 
 init_tables:
         if (r5 != -1) goto init_tables_loop using r4
-        
-        m[r0][jumptable + '0'] := num_case
+        m[r0][jumptable + 48] := num_case
         m[r0][jumptable + '1'] := num_case
         m[r0][jumptable + '2'] := num_case
         m[r0][jumptable + '3'] := num_case
@@ -29,18 +28,34 @@ init_tables:
         m[r0][jumptable + '7'] := num_case
         m[r0][jumptable + '8'] := num_case
         m[r0][jumptable + '9'] := num_case
-        m[r0][jumptable + ' '] := num_case
+        m[r0][jumptable + ' '] := waiting
+        m[r0][jumptable + '\n'] := waiting
 
-        // m[r0][is_digit_table + '0'] := enter_case
-      //  m[r0][is_digit_table + '1'] := enter_case
-      //  m[r0][is_digit_table + '2'] := enter_case
-      //  m[r0][is_digit_table + '3'] := enter_case
-      //  m[r0][is_digit_table + '4'] := enter_case
-      //  m[r0][is_digit_table + '5'] := enter_case
-      //  m[r0][is_digit_table + '6'] := enter_case
-       // m[r0][is_digit_table + '7'] := enter_case
-       // m[r0][is_digit_table + '8'] := enter_case
-       // m[r0][is_digit_table + '9'] := enter_case
+        m[r0][is_digit_table + '0'] := enter_case
+        m[r0][is_digit_table + '1'] := enter_case
+        m[r0][is_digit_table + '2'] := enter_case
+        m[r0][is_digit_table + '3'] := enter_case
+        m[r0][is_digit_table + '4'] := enter_case
+        m[r0][is_digit_table + '5'] := enter_case
+        m[r0][is_digit_table + '6'] := enter_case
+        m[r0][is_digit_table + '7'] := enter_case
+        m[r0][is_digit_table + '8'] := enter_case
+        m[r0][is_digit_table + '9'] := enter_case
+        //m[r0][is_digit_table + '+'] := add_case
+        //m[r0][is_digit_table + '-'] := sub_case
+       //m[r0][is_digit_table + '*'] := mult_case
+        //m[r0][is_digit_table + '/'] := div_case
+        //m[r0][is_digit_table + '|'] := or_case
+        //m[r0][is_digit_table + '&'] := and_case
+        //m[r0][is_digit_table + 'c'] := sign_change_case
+        //m[r0][is_digit_table + '~'] := comp_case
+        //m[r0][is_digit_table + 's'] := swap_case
+        //m[r0][is_digit_table + 'd'] := dupe_case
+        //m[r0][is_digit_table + 'p'] := pop_case
+        //m[r0][is_digit_table + 'z'] := zero_case
+        m[r0][is_digit_table + '\n'] := newline_case
+
+       goto loop
 
 .section text
 
@@ -48,12 +63,9 @@ main:
         push r1 on stack r2
         push r3 on stack r2
         push r4 on stack r2
-
-        r4 := jumptable
-        push r4 on stack r2
-        goto printd linking r1
-
         r5 := 255
+        goto init_tables
+       
 
         loop: 
                 goto waiting
@@ -72,44 +84,47 @@ waiting:
         
 waiting_with_character:
         if(r1 == 4294967295) goto finish using r4
-        output "In waiting!"
-        
         // branch indirect through jump table
-        output r1
-        r5 := jumptable + r1
-        r5 := m[r0][r5]
-        output "Leaving waiting!"
-        goto r5
+        r4 := jumptable + r1
+        r3 := r1 - 48
+        r4 := m[r0][r4]
+        if(r4 == 1) goto num_case using r5
+        goto r4
 
 num_case:
-        output "in num case"
-        push r1 on stack r2
+        push r3 on stack r2
         goto entering
 
 input_error:
         output "Unknown character '"
-        output "r1"
+        output r1
         output "' \n"
         goto waiting
 
 
 entering:
-        output "In entering!"
         r1 := input()
         // if it is a digit
-        // r5 := is_digit_table + r1
-        // r5 := m[r0][r5]
-        // goto r5
+        r5 := is_digit_table + r1
+        r3 := r1 - 48
+        r5 := m[r0][r5]
+        goto r5
 
 digit_default_case:
         goto waiting_with_character
 
 enter_case:
-        pop r6 off stack r2
-        r6 := r6 * 10
-        r6 := r6 + r1
-        push r6 on stack r2
+        pop r4 off stack r2
+        r4 := r4 * 10
+        r4 := r4 + r3
+        push r4 on stack r2
         goto entering
+
+newline_case:
+        output ">>> "
+        goto printd linking r1
+        output "\n"
+        goto waiting
 
 finish:
         pop r4 off stack r2
