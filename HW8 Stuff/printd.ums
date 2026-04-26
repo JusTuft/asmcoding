@@ -1,0 +1,64 @@
+.zero r0
+.temps r6, r7
+.section text
+
+printd:
+        push r3 on stack r2
+        push r4 on stack r2
+        push r1 on stack r2
+        r4 := m[r0][r2+3]
+
+        if (r4 == 0) goto outputzero
+        if (r4 <s 0) goto outputdash using r5
+        
+check:
+        if (r4 >s -1) goto andif using r5  
+
+printd_loop:
+
+        r3 := r4
+        r4 := r4 / 10
+        push r4 on stack r2
+        goto printd linking r1
+        //output "Recursion!"
+        pop r4 off stack r2
+        r4 := r4 * 10
+        r3 := r3 - r4
+        r3 := r3 + 48
+        output r3
+
+       //output "   Recursion2   "
+        
+        pop r5 off stack r2
+        pop r4 off stack r2
+        pop r3 off stack r2
+        goto r5
+        
+
+outputzero:
+        output r0
+        goto printd_loop
+
+outputdash:
+        output '-'
+        if (r4 == -1) goto neg_one using r5
+        r4 := r4 nand r4
+        r4 := r4 + 1
+        goto check
+
+neg_one:
+        r4 := 1
+        goto finish_print
+
+andif: 
+        if (r4 <s 10) goto finish_print using r5
+        goto printd_loop
+
+finish_print:
+        r4 := r4 + 48
+        output r4
+        pop r5 off stack r2
+        pop r4 off stack r2
+        pop r3 off stack r2
+        goto r5
+
