@@ -36,8 +36,8 @@ printd_loop:
         
 
 outputzero:
-        output r0
-        goto printd_loop
+        output '0'
+        goto finish
 
 outputdash:
         output '-'

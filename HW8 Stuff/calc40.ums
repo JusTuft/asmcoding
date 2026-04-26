@@ -18,7 +18,7 @@ init_tables_loop:
 
 init_tables:
         if (r5 != -1) goto init_tables_loop using r4
-        m[r0][jumptable + 48] := num_case
+        m[r0][jumptable + '0'] := num_case
         m[r0][jumptable + '1'] := num_case
         m[r0][jumptable + '2'] := num_case
         m[r0][jumptable + '3'] := num_case
@@ -100,8 +100,6 @@ waiting_with_character:
         r4 := jumptable + r1
         r4 := m[r0][r4]
 
-        // idk what this does
-        if(r4 == 1) goto num_case using r5
         goto r4
 
 num_case:
@@ -138,11 +136,25 @@ enter_case:
         push r4 on stack r2
         goto entering
 
+
+
 newline_case:
+        r4 := 0
+        goto newline_loop
+
+newline_handler:
+        if (r4 == r3) goto waiting using r5
+
+newline_loop:
         output ">>> "
+        r5 := r2 + r4
+        r5 := m[r0][r5]
+        push r5 on stack r2
         goto printd linking r1
+        pop r5 off stack r2
         output "\n"
-        goto waiting
+        r4 := r4 + 1
+        goto newline_handler
 
 
 
