@@ -41,7 +41,7 @@ init_tables:
         m[r0][jumptable + 'p'] := pop_case
         m[r0][jumptable + 'z'] := zero_case
         m[r0][jumptable + ' '] := waiting
-        m[r0][jumptable + '\n'] := waiting
+        m[r0][jumptable + '\n'] := newline_case
 
         m[r0][is_digit_table + '0'] := enter_case
         m[r0][is_digit_table + '1'] := enter_case
@@ -186,7 +186,7 @@ add_case:
         push r1 on stack r2
         r3 := r3 - 1
 
-        goto newline_case
+        goto waiting
 
 sub_case:
         if (r3 <s 2) goto stack_underflow_2 using r4
@@ -197,7 +197,7 @@ sub_case:
         push r1 on stack r2
         r3 := r3 - 1
 
-        goto newline_case
+        goto waiting
 
 mult_case:
         if (r3 <s 2) goto stack_underflow_2 using r4
@@ -208,21 +208,53 @@ mult_case:
         push r1 on stack r2
         r3 := r3 - 1
 
-        goto newline_case
+        goto waiting
 
 div_case:
         if (r3 <s 2) goto stack_underflow_2 using r4
 
         pop r4 off stack r2
+        if (r4 == 0) goto div_by_zero
+        r5 := 0
+
+        // if (r4 <s 0) goto r4_neg using r5
+
+
+div_check_r1:
         pop r1 off stack r2
-        // check if denominator (r4) == 0
-        // check if x and/or y are negative
+        push r4 on stack r2
+        // if (r1 <s 0) goto r1_neg using r5
+
+div_divide:
+        pop r4 off stack r2
         r1 := r1 / r4
-        
+        if (r5 == 1) goto div_flip using r4
+
+div_end:
         r3 := r3 - 1
         push r1 on stack r2
 
-        goto newline_case
+        goto waiting
+
+div_by_zero:
+        output "Division by zero\n"
+        push r4 on stack r2
+        goto waiting
+
+r4_neg:
+        r4 := -r4
+        r5 := r5 + 1
+        goto div_check_r1
+
+r1_neg:
+        r1 := -r1
+        r5 := r5 + 1
+        goto div_divide
+        
+div_flip:
+        r1 := -r1
+        goto div_end
+
 
 or_case:
         if (r3 <s 2) goto stack_underflow_2 using r4
@@ -233,7 +265,7 @@ or_case:
         r3 := r3 - 1
         push r1 on stack r2
 
-        goto newline_case
+        goto waiting
 
 and_case:
         if (r3 <s 2) goto stack_underflow_2 using r4
@@ -244,21 +276,21 @@ and_case:
         r3 := r3 - 1
         push r1 on stack r2
 
-        goto newline_case
+        goto waiting
 
 sign_change_case:
         if (r3 <s 1) goto stack_underflow_1 using r4
         pop r1 off stack r2
         r1 := -r1
         push r1 on stack r2
-        goto newline_case
+        goto waiting
 
 comp_case:
         if (r3 <s 1) goto stack_underflow_1 using r4
         pop r1 off stack r2
         r1 := ~r1
         push r1 on stack r2
-        goto newline_case
+        goto waiting
 
 swap_case:
         if (r3 <s 2) goto stack_underflow_2 using r4
@@ -266,7 +298,7 @@ swap_case:
         pop r4 off stack r2
         push r1 on stack r2
         push r4 on stack r2
-        goto newline_case
+        goto waiting
 
 dupe_case:
         if (r3 <s 1) goto stack_underflow_1 using r4
@@ -274,17 +306,17 @@ dupe_case:
         push r1 on stack r2
         push r1 on stack r2
         r3 := r3 + 1
-        goto newline_case
+        goto waiting
 
 pop_case:
         if (r3 <s 1) goto stack_underflow_1 using r4
         pop r1 off stack r2
         r3 := r3 - 1
-        goto newline_case
+        goto waiting
 
 
 zero_case:
-        if (r3 == 0) goto newline_case
+        if (r3 == 0) goto waiting
 
 zero_loop:
         pop r4 off stack r2

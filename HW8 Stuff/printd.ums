@@ -8,7 +8,6 @@ printd:
         push r1 on stack r2
         r4 := m[r0][r2+3]
 
-        if (r4 == 0) goto outputzero
         if (r4 <s 0) goto outputdash using r5
         
 check:
@@ -35,9 +34,7 @@ printd_loop:
         goto r5
         
 
-outputzero:
-        output '0'
-        goto finish
+
 
 outputdash:
         output '-'
