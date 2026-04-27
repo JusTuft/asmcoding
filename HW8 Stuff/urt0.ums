@@ -1,0 +1,12 @@
+        .zero r0
+        .temps r6, r7
+        .section init
+_ustart:
+        r0 := 0
+        r2 := endstack
+        goto callmain linking r1
+        halt
+        .section text
+        .section stk
+        .space 10000
+endstack:

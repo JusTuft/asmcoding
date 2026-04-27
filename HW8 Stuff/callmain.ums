@@ -1,0 +1,7 @@
+.zero r0
+.temps r6, r7
+.section init
+
+callmain:
+        goto main linking r1
+        halt
