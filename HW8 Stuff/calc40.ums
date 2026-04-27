@@ -140,7 +140,7 @@ enter_case:
 
 newline_case:
         r4 := 0
-        goto newline_loop
+        goto newline_handler
 
 newline_handler:
         if (r4 == r3) goto waiting using r5
@@ -159,9 +159,9 @@ newline_loop:
 
 
 finish:
-        pop r4 off stack r2
-        pop r3 off stack r2
-        pop r5 off stack r2
+        r5 := r2 + r3
+        r5 := r5 + 2
+        r5 := m[r0][r5]
         r1 := 0
         goto r5
 
@@ -217,13 +217,13 @@ div_case:
         if (r4 == 0) goto div_by_zero
         r5 := 0
 
-        // if (r4 <s 0) goto r4_neg using r5
+        if (r4 <s r0) goto first_neg using r1
 
 
 div_check_r1:
         pop r1 off stack r2
         push r4 on stack r2
-        // if (r1 <s 0) goto r1_neg using r5
+        if (r1 <s r0) goto second_neg using r4
 
 div_divide:
         pop r4 off stack r2
@@ -241,12 +241,12 @@ div_by_zero:
         push r4 on stack r2
         goto waiting
 
-r4_neg:
+first_neg:
         r4 := -r4
         r5 := r5 + 1
         goto div_check_r1
 
-r1_neg:
+second_neg:
         r1 := -r1
         r5 := r5 + 1
         goto div_divide
