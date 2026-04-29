@@ -1,15 +1,20 @@
 .zero r0
 .temps r6, r7
 .section text
-
+//function that will print out the decimal value of the item at the top of the 
+//stack
 printd:
+        //Pushes all non-volatile register values and return address onto the 
+        //stack
         push r3 on stack r2
         push r4 on stack r2
         push r1 on stack r2
+        //gets value to be printed
         r4 := m[r0][r2+3]
 
+        //if negative handel as a separate case
         if (r4 <s 0) goto outputdash using r5
-        
+//checks for base case when r4 is a digit between 0-9       
 check:
         if (r4 >s -1) goto andif using r5  
 
@@ -19,14 +24,12 @@ printd_loop:
         r4 := r4 / 10
         push r4 on stack r2
         goto printd linking r1
-        //output "Recursion!"
         pop r4 off stack r2
         r4 := r4 * 10
         r3 := r3 - r4
         r3 := r3 + 48
         output r3
 
-       //output "   Recursion2   "
         
         pop r5 off stack r2
         pop r4 off stack r2
@@ -58,4 +61,3 @@ finish_print:
         pop r4 off stack r2
         pop r3 off stack r2
         goto r5
-

@@ -16,21 +16,42 @@ Hopefully all of it
 
 Departures from recommended calling convention:
 -----------------------------------------
-
+We don't have really any departures from the recommended calling convention.
 
 
 How we implemented print module:
 -----------------------------------------
-
+We implemented the print module as outlined by the specs. We accounted 
+for edge cases seperatly and printed character out by recusivly itterating down 
+each digit. 
 
 
 How we're representing RPN character's value stack:
 -----------------------------------------
+We are representing the value stack by using a 10,000 word stack that r2
+points to, and we have r3 consistently track the amount of values currently
+on that stack.
 
+
+List of Sections:
+-----------------------------------------
+init
+- Contains code to initialize our jump tables, register 0, and the stack
+pointer as well as containing callmain.
+
+text
+- Contains all our code for the printd module and our calculator-related
+functions.
+
+data 
+- Reserves 10,000 words of space on our stack.
+
+rodata
+- Reserves space for our jump tables. (here lies data for our jumptables)
 
 
 Hours Spent:
 -----------------------------------------
-Time Spent Analyzing: 0 hours
-Time Spent Writing: 0 hours
-Time Spent Debugging: 0 hours
+Time Spent Analyzing: 4 hours
+Time Spent Writing: 14 hours
+Time Spent Debugging: 9 hours

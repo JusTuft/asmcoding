@@ -4,9 +4,8 @@
 _ustart:
         r0 := 0
         r2 := endstack
-        goto callmain linking r1
-        halt
+        
         .section text
-        .section stk
+        .section data
         .space 10000
 endstack:

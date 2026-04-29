@@ -1,13 +1,17 @@
 .zero r0
 .temps r6, r7
 
+// Allocates space for jumptables
 .section rodata
         jumptable: .space 256
         is_digit_table: .space 256
 
+
 .section init
+
+// Initialize all cases in both jumptables to a default case
+init_tables_init:
         r5 := 255
-        goto init_tables
 
 init_tables_loop:
         r3 := jumptable + r5
@@ -16,8 +20,12 @@ init_tables_loop:
         m[r0][r3] := digit_default_case
         r5 := r5 - 1
 
+// Calls the init_tables_loop while default cases still need to be set, and
+// once done, set all special jump table cases and start the calculator loop.
 init_tables:
         if (r5 != -1) goto init_tables_loop using r4
+        
+        // For all calculator-related characters, give a special case for them
         m[r0][jumptable + '0'] := num_case
         m[r0][jumptable + '1'] := num_case
         m[r0][jumptable + '2'] := num_case
@@ -65,69 +73,73 @@ init_tables:
         m[r0][is_digit_table + 'd'] := dupe_case
         m[r0][is_digit_table + 'p'] := pop_case
         m[r0][is_digit_table + 'z'] := zero_case
-        m[r0][is_digit_table + '\n'] := newline_case
+        m[r0][is_digit_table + '\n'] := newline_case  
 
-        r3 := 0
-        goto loop
 
 .section text
 
-main:
+// Pushes all non-volatile register values onto the stack, then sets r5 to 255
+// and initialize jump tables.
+main:   
         push r1 on stack r2
         push r3 on stack r2
         push r4 on stack r2
-        r5 := 255
-        goto init_tables
-       
-        loop: 
-                goto waiting
-                goto loop
         
-
-        pop r4 off stack r2
-        pop r3 off stack r2
-        pop r5 off stack r2
-        r1 := 0
-        goto r5
+        //initializing r3 to be size of stack
+        r3 := 0
 
 
+// Read in a single character through input and store character into r1
 waiting:
         r1 := input()
-        
+
+// Use inputted character and jumptable to go to the appropriate case, where
+// EOF has not yet been reached.
 waiting_with_character:
-        if(r1 == 4294967295) goto finish using r4
-        // branch indirect through jump table
+        // Check for EOF
+        if(r1 == 4294967295) goto zero_case using r4
+        
+        // Branch indirect through jump table
         r4 := jumptable + r1
         r4 := m[r0][r4]
-
         goto r4
-
+        
+// Pushes the integer representation of the value of r1 onto the stack and
+// updates stack counter r3, then continues to enter data for that number, where
+// r1 must be a digit
 num_case:
         r5 := r1 - 48
         push r5 on stack r2
         r3 := r3 + 1
         goto entering
 
+// Output error message using r1 and then return to calculator loop, where r1
+// is the user-inputted character.
 input_error:
         output "Unknown character '"
         output r1
         output "' \n"
         goto waiting
 
-
-
-
+// Receive user input (through r1) and check for EOF, then update previous
+// input if new input is also a digit, where previous input must be a digit.
 entering:
+        // Get user input and check for EOF
         r1 := input()
-        if(r1 == 4294967295) goto finish using r4
-        // if it is a digit
+        if(r1 == 4294967295) goto zero_case using r4
+        
+        // Branch indirect through jump table
         r5 := is_digit_table + r1
         r5 := m[r0][r5]
         goto r5
 
+// Use inputted character to continue with calculator loop, where input (r1) is
+// NOT a digit.
 digit_default_case:
         goto waiting_with_character
 
+// Add the value of r1 onto the end of the top value of the stack, then go to
+// entering step, where both values must be digits.
 enter_case:
         pop r4 off stack r2
         r5 := r1 - 48
@@ -137,14 +149,19 @@ enter_case:
         goto entering
 
 
-
+// Print all contents of the stack, then go back to calculator loop, where r4
+// is used as a loop counter and previously inputted character must be a
+// newline.
 newline_case:
         r4 := 0
         goto newline_handler
 
+// Check if all stack values have been outputted using r4 (loop counter) and
+// r3 (stack counter)
 newline_handler:
         if (r4 == r3) goto waiting using r5
-
+// Contents for the loop, prints each value on the stack and updates loop
+// counter (r4) for each iteration
 newline_loop:
         output ">>> "
         r5 := r2 + r4
@@ -157,105 +174,160 @@ newline_loop:
         goto newline_handler
 
 
-
+// Receive return address of program in r5 and goes to r5, where the value at
+// m[r0][r2 + r3 + 2] must be the return address.
 finish:
-        r5 := r2 + r3
-        r5 := r5 + 2
-        r5 := m[r0][r5]
+        pop r4 off stack r2
+        pop r3 off stack r2
+        pop r5 off stack r2
         r1 := 0
         goto r5
 
 
-
+// Prints an error statement for <2 stack elements when at least 2 were needed,
+// then goes to main calculator loop
 stack_underflow_2:
         output "Stack underflow---expected at least 2 elements\n"
         goto waiting
 
+// Prints an error statement for <1 stack elements when at least 1 was needed,
+// then goes to main calculator loop
 stack_underflow_1:
         output "Stack underflow---expected at least 1 element\n"
         goto waiting
 
 
-
+// Pops top two elements of the stack off, adds them, and pushes the sum to the
+// stack after operation is finished, then return to main calculator loop.
+// Top two values on the stack must be digits.
 add_case:
+        // Checks >= 2 elements on the stack
         if (r3 <s 2) goto stack_underflow_2 using r4
+
+        // Add top 2 elements on stack
         pop r4 off stack r2
         pop r1 off stack r2
         r1 := r1 + r4
 
+        // Push sum & update stack counter
         push r1 on stack r2
         r3 := r3 - 1
 
+        // Go back to calc loop
         goto waiting
 
+// Pops top two elements of the stack off, subtracts them, and pushes the
+// difference to the stack after operation is finished, then return to main
+// calculator loop. Top two values on the stack must be digits.
 sub_case:
+        // Checks >= 2 elements on the stack
         if (r3 <s 2) goto stack_underflow_2 using r4
+
+        // Subtract top 2 elements on stack
         pop r4 off stack r2
         pop r1 off stack r2
         r1 := r1 - r4
 
+        // Push difference & update stack counter
         push r1 on stack r2
         r3 := r3 - 1
 
+        // Go back to calc loop
         goto waiting
 
+// Pops top two elements of the stack off, multiplies them, and pushes the
+// product to the stack after operation is finished, then return to main
+// calculator loop. Top two values on the stack must be digits.
 mult_case:
+        // Checks >= 2 elements on the stack
         if (r3 <s 2) goto stack_underflow_2 using r4
+
+        // Multiply top 2 elements on stack
         pop r4 off stack r2
         pop r1 off stack r2
         r1 := r1 * r4
 
+        // Push product & update stack counter
         push r1 on stack r2
         r3 := r3 - 1
 
+        // Go back to calc loop
         goto waiting
 
+// Pops top two elements of the stack off, divides them, and pushes the
+// quotient to the stack after operation is finished, then return to main
+// calculator loop. Top two values on the stack must be digits.
+// Uses r5 as a counter to track how many digits in the operation are negative.
 div_case:
+        // Checks >= 2 elements on the stack
         if (r3 <s 2) goto stack_underflow_2 using r4
 
+        // Check if denominator of operation is zero and outputs error message
+        // if so
         pop r4 off stack r2
         if (r4 == 0) goto div_by_zero
+
+        // Initialize negatives counter
         r5 := 0
 
+        // Check if denominator value is negative, then update r5 and convert
+        // to positive if so
         if (r4 <s r0) goto first_neg using r1
 
-
+// Checks if numerator on the stack is negative, then updates r5 and converts
+// value to positive if negative.
 div_check_r1:
         pop r1 off stack r2
         push r4 on stack r2
         if (r1 <s r0) goto second_neg using r4
 
+// Performs division of the two elements and stores result in r1, then flips
+// result to negative if only 1 negative number between numerator & denominator
 div_divide:
         pop r4 off stack r2
         r1 := r1 / r4
         if (r5 == 1) goto div_flip using r4
 
+// Pushes quotient onto stack and goes to main calculator loop
 div_end:
         r3 := r3 - 1
         push r1 on stack r2
 
         goto waiting
 
+// Prints error message if attempting to divide by zero, then pushes r4 back
+// onto stack and goes to main calculator loop, where r4 must equal zero
 div_by_zero:
         output "Division by zero\n"
         push r4 on stack r2
         goto waiting
 
+// Flips the sign of value in r4 and adds 1 to r5, then continues with divide
+// operation, where r4 is the negative denominator and r5 is the negative
+// counter.
 first_neg:
         r4 := -r4
         r5 := r5 + 1
         goto div_check_r1
 
+// Flips the sign of value in r1 and adds 1 to r5, then continues with divide
+// operation, where r1 is the negative numerator and r5 is the negative
+// counter.
 second_neg:
         r1 := -r1
         r5 := r5 + 1
         goto div_divide
-        
+
+// Flips the sign of value in r1, then ends division operation, where r1 is
+// the quotient of the operation
 div_flip:
         r1 := -r1
         goto div_end
 
 
+// Pops top two elements of the stack off, bitwise or's them, and pushes the
+// result to the stack after operation is finished, then return to main
+// calculator loop. Top two values on the stack must be digits.
 or_case:
         if (r3 <s 2) goto stack_underflow_2 using r4
         pop r4 off stack r2
@@ -267,6 +339,9 @@ or_case:
 
         goto waiting
 
+// Pops top two elements of the stack off, bitwise and's them, and pushes the
+// result to the stack after operation is finished, then return to main
+// calculator loop. Top two values on the stack must be digits.
 and_case:
         if (r3 <s 2) goto stack_underflow_2 using r4
         pop r4 off stack r2
@@ -277,14 +352,14 @@ and_case:
         push r1 on stack r2
 
         goto waiting
-
+//flips the sign of the top value of the stack
 sign_change_case:
         if (r3 <s 1) goto stack_underflow_1 using r4
         pop r1 off stack r2
         r1 := -r1
         push r1 on stack r2
         goto waiting
-
+//replaces the top value on the stack to be its complement 
 comp_case:
         if (r3 <s 1) goto stack_underflow_1 using r4
         pop r1 off stack r2
@@ -292,6 +367,8 @@ comp_case:
         push r1 on stack r2
         goto waiting
 
+//swaps the location of the top two values on the stack returns to waiting after
+//done
 swap_case:
         if (r3 <s 2) goto stack_underflow_2 using r4
         pop r1 off stack r2
@@ -300,6 +377,9 @@ swap_case:
         push r4 on stack r2
         goto waiting
 
+// Duplicates the value at the top of the stack and adds 1 to r3, then returns,
+// where there must be at least one value on the stack. returns to waiting after
+// done 
 dupe_case:
         if (r3 <s 1) goto stack_underflow_1 using r4
         pop r1 off stack r2
@@ -308,6 +388,8 @@ dupe_case:
         r3 := r3 + 1
         goto waiting
 
+// Pops one value off the stack, then returns, where there must be at least one
+// value on the stack. Returns to waiting after done
 pop_case:
         if (r3 <s 1) goto stack_underflow_1 using r4
         pop r1 off stack r2
@@ -315,10 +397,16 @@ pop_case:
         goto waiting
 
 
+// Pops all calculator values off the stack, then returns, where r3 equals
+// zero once finished. Returns to waiting after done
 zero_case:
-        if (r3 == 0) goto waiting
+        if (r3 == 0) goto zero_return
 
 zero_loop:
         pop r4 off stack r2
         r3 := r3 - 1
         goto zero_case
+
+zero_return:
+        if (r1 == 4294967295) goto finish using r4
+        goto waiting
