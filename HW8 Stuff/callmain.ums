@@ -1,3 +1,6 @@
+// Justin Projansky (jproja01), Kayleen Tang (ktang09)
+// Purpose: This file calls main
+// r1: stores return adress
 .zero r0
 .temps r6, r7
 .section init

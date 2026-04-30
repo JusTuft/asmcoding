@@ -1,3 +1,8 @@
+// Justin Projansky (jproja01), Kayleen Tang (ktang09)
+// Purpose: initializes registers r0 and r2 and allocates space for stack, and
+// text
+// r0: contains 0
+// r2: stack pointer
         .zero r0
         .temps r6, r7
         .section init

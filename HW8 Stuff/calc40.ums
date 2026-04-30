@@ -1,3 +1,20 @@
+// Justin Projansky (jproja01), Kayleen Tang (ktang09)
+//
+// Purpose: This file handles all calculator operations
+// Universal Registers: 
+// r0: contains 0
+// r1:
+//      - holds return address (at the end) or function argument (at the start)
+//      - holds input value during main calculator loop
+// r2: stack pointer
+// r3: stack counter (storing number of items on stack)
+// r4: non-volatile register
+//      - used for operation calculations
+// r5: volatile register
+//      - used for operation calculations
+// r6 and r7: temporary registers
+
+
 .zero r0
 .temps r6, r7
 
@@ -9,10 +26,11 @@
 
 .section init
 
-// Initialize all cases in both jumptables to a default case
+// Set loop counter and start initializing all jumptable cases
 init_tables_init:
         r5 := 255
 
+// Initialize all cases in both jumptables to a default case
 init_tables_loop:
         r3 := jumptable + r5
         m[r0][r3] := input_error
@@ -90,11 +108,13 @@ main:
 
 
 // Read in a single character through input and store character into r1
+// In this region, r1 holds the user-inputted character
 waiting:
         r1 := input()
 
 // Use inputted character and jumptable to go to the appropriate case, where
 // EOF has not yet been reached.
+// Takes user-inputted character (r1) as input
 waiting_with_character:
         // Check for EOF
         if(r1 == 4294967295) goto zero_case using r4
@@ -105,8 +125,9 @@ waiting_with_character:
         goto r4
         
 // Pushes the integer representation of the value of r1 onto the stack and
-// updates stack counter r3, then continues to enter data for that number, where
-// r1 must be a digit
+// updates stack counter r3, then continues to enter data for that number,
+// where r1 must be a digit
+// Takes user-inputted digit (r1) as input
 num_case:
         r5 := r1 - 48
         push r5 on stack r2
@@ -115,6 +136,7 @@ num_case:
 
 // Output error message using r1 and then return to calculator loop, where r1
 // is the user-inputted character.
+// Takes user-inputted character (r1) as input
 input_error:
         output "Unknown character '"
         output r1
@@ -123,6 +145,7 @@ input_error:
 
 // Receive user input (through r1) and check for EOF, then update previous
 // input if new input is also a digit, where previous input must be a digit.
+// Takes user-inputted character (r1) as input
 entering:
         // Get user input and check for EOF
         r1 := input()
@@ -140,6 +163,7 @@ digit_default_case:
 
 // Add the value of r1 onto the end of the top value of the stack, then go to
 // entering step, where both values must be digits.
+// Takes user-inputted digit (r1) as input
 enter_case:
         pop r4 off stack r2
         r5 := r1 - 48
@@ -160,6 +184,7 @@ newline_case:
 // r3 (stack counter)
 newline_handler:
         if (r4 == r3) goto waiting using r5
+
 // Contents for the loop, prints each value on the stack and updates loop
 // counter (r4) for each iteration
 newline_loop:
@@ -352,14 +377,21 @@ and_case:
         push r1 on stack r2
 
         goto waiting
-//flips the sign of the top value of the stack
+
+
+// Pops top element of the stack off, changes its sign, and pushes the new
+// value to the stack after operation is finished, then return to main
+// calculator loop. Top value on the stack must be a digit.
 sign_change_case:
         if (r3 <s 1) goto stack_underflow_1 using r4
         pop r1 off stack r2
         r1 := -r1
         push r1 on stack r2
         goto waiting
-//replaces the top value on the stack to be its complement 
+
+// Pops top element of the stack off, changes it to its bitwise complement, and
+// pushes the result to the stack after operation is finished, then return to
+// main calculator loop. Top value on the stack must be a digit.
 comp_case:
         if (r3 <s 1) goto stack_underflow_1 using r4
         pop r1 off stack r2
@@ -367,8 +399,10 @@ comp_case:
         push r1 on stack r2
         goto waiting
 
-//swaps the location of the top two values on the stack returns to waiting after
-//done
+
+// Pops top two elements of the stack off and push them onto the stack so they
+// are in reverse order, then return to main calculator loop. Top two values on
+// the stack must be digits.
 swap_case:
         if (r3 <s 2) goto stack_underflow_2 using r4
         pop r1 off stack r2
@@ -377,9 +411,8 @@ swap_case:
         push r4 on stack r2
         goto waiting
 
-// Duplicates the value at the top of the stack and adds 1 to r3, then returns,
-// where there must be at least one value on the stack. returns to waiting after
-// done 
+// Pops top element of the stack off and pushes it onto the stack twice, then
+// return to main calculator loop. Top value on the stack must be a digit.
 dupe_case:
         if (r3 <s 1) goto stack_underflow_1 using r4
         pop r1 off stack r2
@@ -388,8 +421,8 @@ dupe_case:
         r3 := r3 + 1
         goto waiting
 
-// Pops one value off the stack, then returns, where there must be at least one
-// value on the stack. Returns to waiting after done
+// Pops top element of the stack off & decrements stack counter, then return
+// to main calculator loop. Top value on the stack must be a digit.
 pop_case:
         if (r3 <s 1) goto stack_underflow_1 using r4
         pop r1 off stack r2
@@ -397,16 +430,19 @@ pop_case:
         goto waiting
 
 
-// Pops all calculator values off the stack, then returns, where r3 equals
-// zero once finished. Returns to waiting after done
+// Pops all elements on the stack off, then returns to either the finish
+// procedure (if EOF has been reached) or to main calculator loop.
+// Takes previously inputted character (r1) as input
 zero_case:
         if (r3 == 0) goto zero_return
 
+// Pops values off stack one-at-a-time and decrements stack counter accordingly
 zero_loop:
         pop r4 off stack r2
         r3 := r3 - 1
         goto zero_case
 
+// If EOF reached, end the program, otherwise continue calculator loop
 zero_return:
         if (r1 == 4294967295) goto finish using r4
         goto waiting

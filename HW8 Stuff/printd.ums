@@ -1,23 +1,42 @@
+// Justin Projansky (jproja01), Kayleen Tang (ktang09)
+//
+// Purpose: contains a function that is able to print out the top value on the
+// stack
+//
+// Universal Registers: 
+// r0: contains 0
+// r1: contains return adress
+// r2: contains stack pointer
+// r3: non-volotile register
+// r4: non-volatile register
+// r5: volatile register
+// r6 and r7: temporary registers
+
 .zero r0
 .temps r6, r7
 .section text
-//function that will print out the decimal value of the item at the top of the 
-//stack
+
+// Function that will print out the decimal value of the item at the top of the 
+// stack, then returns.
+// Top value on the stack is expected to be a number printable in decimal.
+// Outputs number at the top of the stack in decimal to stdout
 printd:
-        //Pushes all non-volatile register values and return address onto the 
-        //stack
+        // Pushes all non-volatile register values and return address onto the 
+        // stack
         push r3 on stack r2
         push r4 on stack r2
         push r1 on stack r2
-        //gets value to be printed
+        // Gets value to be printed
         r4 := m[r0][r2+3]
 
-        //if negative handel as a separate case
+        // If negative, handle as a separate case
         if (r4 <s 0) goto outputdash using r5
-//checks for base case when r4 is a digit between 0-9       
+
+// Checks for base case when r4 is a digit between 0-9       
 check:
         if (r4 >s -1) goto andif using r5  
 
+// Loop that will itterate through each digit and print it out
 printd_loop:
 
         r3 := r4
@@ -38,7 +57,7 @@ printd_loop:
         
 
 
-
+// Outputs a dash should the number be negative
 outputdash:
         output '-'
         if (r4 == -1) goto neg_one using r5
@@ -46,14 +65,16 @@ outputdash:
         r4 := r4 + 1
         goto check
 
+// Handles negative one as its own seperate edge case
 neg_one:
         r4 := 1
         goto finish_print
-
+// Checks to make sure that r4 is less than 10
 andif: 
         if (r4 <s 10) goto finish_print using r5
         goto printd_loop
 
+// Outputs a character and returns to return addsress
 finish_print:
         r4 := r4 + 48
         output r4
